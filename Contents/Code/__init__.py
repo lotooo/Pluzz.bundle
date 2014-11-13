@@ -198,11 +198,13 @@ def CategoriesMenu(sender):
     json_cat = Data.Load('categories.json')
     objects = JSON.ObjectFromString(json_cat, encoding='iso-8859-15')
     for categorie in objects['categories']:
+	    clean_categorie_name = String.StripDiacritics(categorie['titre'])
+	    clean_accroche = String.StripDiacritics(categorie['accroche'])
 	    oc.add(
 		DirectoryObject(
-			key=Callback(MediaView, ContentType='category', ContentFilter=categorie['titre'], title=categorie['titre'] ),
-			title=L(categorie['titre']),
-			summary=L(categorie['accroche']),
+			key=Callback(MediaView, ContentType='category', ContentFilter=categorie['titre'], title=clean_categorie_name ),
+			title=L(clean_categorie_name),
+			summary=L(clean_accroche),
 			thumb=R(ICON),
 			art=R(ART)
 		)
