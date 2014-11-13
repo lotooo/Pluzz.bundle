@@ -241,11 +241,12 @@ def ShowMenu(sender):
 	    if show_name == '':
 		continue
 	    #show_name = unicode(show_name, 'latin-1')
+	    clean_show_name = String.StripDiacritics(show_name)
 	    oc.add(
 		DirectoryObject(
-			key=Callback(MediaView, ContentType='show', ContentFilter=show_name, title=show_name ),
-			title=L(show_name),
-			summary=L(show_name),
+			key=Callback(MediaView, ContentType='show', ContentFilter=show_name, title=clean_show_name ),
+			title=L(clean_show_name),
+			summary=L(clean_show_name),
 			thumb=R(ICON),
 			art=R(ART)
 		)
