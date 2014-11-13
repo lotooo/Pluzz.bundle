@@ -1,0 +1,18 @@
+def MetadataObjectForURL(url):
+  return VideoClipObject(
+    title = 'title',
+    summary = 'description',
+    rating = 2,
+    tags = ['tags'],
+    genres = 'category'
+  )
+
+def MediaObjectsForURL(url):
+	ret = []
+	ret.Append(
+
+	)
+	return ret
+
+def NormalizeURL(url):
+	return url
