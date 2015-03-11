@@ -150,6 +150,18 @@ def VideoMainMenu():
     dir.Append(
         Function(
             DirectoryItem(
+                LiveMenu,
+                "Live",
+                subtitle="subtitle",
+                summary="Regarder le direct",
+                thumb=R(ICON),
+                art=R(ART)
+            )
+        )
+    )
+    dir.Append(
+        Function(
+            DirectoryItem(
                 Refresh,
                 "Actualiser",
                 subtitle="subtitle",
@@ -208,6 +220,37 @@ def CategoriesMenu(sender):
 			thumb=R(ICON),
 			art=R(ART)
 		)
+	    )
+    return oc
+
+@route('/video/pluzz/live')
+def LiveMenu(sender):
+    oc = ObjectContainer(title1='Regarder le direct')
+    json = Data.Load('message_FT.json')
+    objects = JSON.ObjectFromString(json, encoding='iso-8859-15')
+    for chaine in objects['configuration']['directs']:
+        titre       = chaine['nom']
+        video_url   = chaine['video_ipad_v5']
+        summary     = "%s en direct" % chaine['nom']
+        tagline     = summary
+        rating_key  = "direct_%s" % chaine['nom']
+        art         = "%s.png" % chaine['nom'].lower()
+        thumb       = "%s.png" % chaine['nom'].lower()
+        oc.add(
+        VideoClipObject(
+            key = Callback(Lookup, title=titre, thumb=thumb, rating_key=rating_key, url=video_url, art=art, summary=summary, tagline=tagline),
+            title=L(titre),
+            tagline=L(tagline),
+            rating_key =  rating_key,
+            items = [
+                                MediaObject(
+                                        parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=video_url)))]
+                                )
+            ],
+            summary=L(summary),
+			art=R(art),
+			thumb=R(thumb),
+        )
 	    )
     return oc
 
