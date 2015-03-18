@@ -16,6 +16,10 @@ try:
   from cStringIO import StringIO
 except:
   from StringIO import StringIO
+try:
+  from urllib.parse import urlparse as compat_urllib_parse_urlparse
+except ImportError:  # Python 2
+  from urlparse import urlparse as compat_urllib_parse_urlparse
 
 def Start():
     ## make this plugin show up in the 'Video' section
@@ -223,6 +227,21 @@ def CategoriesMenu(sender):
 	    )
     return oc
 
+def getHDManifest(video_url):
+    Log.Debug("Downloading HD Manifest")
+    video_url_parsed = compat_urllib_parse_urlparse(video_url)
+    #HTTP.ClearCookies()
+    #f4m_url = 'http://hdfauth.francetv.fr/esi/urltokengen2.html?url=%s' % video_url_parsed.path
+    f4m_url = 'http://hdfauth.francetv.fr/esi/TA?url=%s' % video_url
+    f4m = HTTP.Request(f4m_url,cacheTime=0)
+    #HTTP.CookiesForURL(f4m_url) 
+    f4m.load()
+    a = compat_urllib_parse_urlparse(f4m.content)
+
+    authorized_url = "%s://%s%s?%s" % (a.scheme,a.netloc,a.path.replace('//','/'),a.query)
+    Log.Debug("New: %s" % authorized_url)
+    return authorized_url
+
 @route('/video/pluzz/live')
 def LiveMenu(sender):
     oc = ObjectContainer(title1='Regarder le direct')
@@ -230,7 +249,11 @@ def LiveMenu(sender):
     objects = JSON.ObjectFromString(json, encoding='iso-8859-15')
     for chaine in objects['configuration']['directs']:
         titre       = chaine['nom']
-        video_url   = chaine['video_ipad_v5']
+        v_url       = chaine['video_iphone_v5']
+        # Generating f4m manifest
+        video_url   = getHDManifest(v_url)
+        #video_url   = v_url
+        Log.Debug("VideoURL: %s" % video_url)
         summary     = "%s en direct" % chaine['nom']
         tagline     = summary
         rating_key  = "direct_%s" % chaine['nom']
@@ -244,7 +267,8 @@ def LiveMenu(sender):
             rating_key =  rating_key,
             items = [
                                 MediaObject(
-                                        parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=video_url)))]
+                                        parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=video_url)))],
+                                        optimized_for_streaming = False,
                                 )
             ],
             summary=L(summary),
@@ -399,7 +423,8 @@ def Lookup(title, thumb, rating_key, url, art, summary, tagline):
 			art		= art,
                         items 		= [
                                 MediaObject(
-                                        parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))]
+                                        parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))],
+                                        optimized_for_streaming = False,
                                 )
                         ]
                 )
