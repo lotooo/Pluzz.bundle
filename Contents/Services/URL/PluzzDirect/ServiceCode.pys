@@ -1,0 +1,95 @@
+import urllib
+
+try:
+  from urllib.parse import urlparse as compat_urllib_parse_urlparse
+except ImportError:  # Python 2
+  from urlparse import urlparse as compat_urllib_parse_urlparse
+
+
+def NormalizeURL(url):
+	return url
+	
+def MetadataObjectForURL(url):
+	try:
+		html = HTML.ElementFromURL(url)
+		
+		station = html.xpath('//a[@class="mail sprite-interface sprite-mail"]//@href')[0].split('(diffus')[1].split('sur ')[1].split(')')[0]
+	
+		show = html.xpath('//span[@itemprop="name"]//text()')[0]
+		try: 
+			title = html.xpath('//div[@class="soustitre"]//text()')[0]
+		except:
+			title = show
+			show = ''
+		
+		try: summary = html.xpath('//span[@class="prefix" and contains(text(), "pisode")]//..//text()')[1].strip()
+		except:
+			try:
+				summary = html.xpath('//span[@class="prefix" and contains(text(), "mission")]//..//text()')[1].strip()
+			except:
+				try: summary = html.xpath('//span[@class="prefix" and contains(text(), "Le programme")]//..//text()')[1].strip()
+				except: summary = ''
+		
+		try: duration = int(html.xpath('//div[@class="infos" and contains(text(),"|")]//text()')[0].split('|')[1].strip()[:-1])*60000
+		except: duration = 0
+		
+		thumb = html.xpath('//meta[@itemprop="thumbnailUrl"]//@content')[0].replace('/200/','/480/')
+		if not thumb.startswith('http'):
+			thumb = 'http://m.pluzz.francetv.fr'+thumb
+		
+		try: season = int(html.xpath('//span[@itemprop="season"]//span[@itemprop="name"]//text()')[0][1:])
+		except: season = 0
+		
+		try: episode = int(html.xpath('//span[@itemprop="episode"]//span[@itemprop="name"]//text()')[0][1:])
+		except: episode = 0
+		
+		directors = html.xpath('//span[@class="prefix" and contains(text(), "De:")]//..//span[@itemprop="actor"]//text()')
+		guest_stars = html.xpath('//span[@class="prefix" and contains(text(), "Avec:")]//..//span[@itemprop="actor"]//text()')
+	except:
+		raise Ex.MediaGeoblocked
+		
+	
+	return EpisodeObject(
+		show = show,
+		title = title,
+		summary = summary,
+		duration = duration,
+		thumb = Resource.ContentsOfURLWithFallback(thumb),
+		season = season,
+		index = episode,
+		directors = directors,
+		guest_stars = guest_stars,
+		source_title = station
+	)
+	
+@deferred
+def MediaObjectsForURL(url):
+	channel_id = url.rsplit('/',1)[1]
+	json = JSON.ObjectFromURL('http://webservices.francetelevisions.fr/catchup/flux/message_FT.json')
+	
+	channels = {c['nom']: c['video_ipad'] for c in json['configuration']['directs']}
+
+	if not channel_id in channels.keys():
+		raise Ex.MediaNotAvailable
+		
+	video_url = channels[channel_id]
+	
+	if urllib.urlopen(video_url).getcode() == 403:
+		raise Ex.MediaGeoblocked
+		
+	return [
+		MediaObject(
+			parts = [
+				PartObject(
+					key = HTTPLiveStreamURL(Callback(PlayVideo, url=channels[channel_id]))
+				)
+			],
+			video_resolution = '576',
+			audio_channels = 2,
+			optimized_for_streaming = True
+		)
+	]
+	
+@indirect
+def PlayVideo(url):
+		return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url))
