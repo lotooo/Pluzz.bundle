@@ -384,7 +384,8 @@ def MediaView(ContentType, ContentFilter, title):
 			rating_key =  rating_key,
 			items = [
                                 MediaObject(
-                                        parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=video_url)))]
+                                    parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=video_url)))],
+                                    optimized_for_streaming = False,
                                 )
 			],
 			summary=L(summary),
@@ -392,6 +393,30 @@ def MediaView(ContentType, ContentFilter, title):
 			art=Resource.ContentsOfURLWithFallback(url=art)
 		)
 	    )
+    return oc
+
+@route('/video/pluzz/program')
+def Lookup(title, thumb, rating_key, url, art, summary, tagline):
+    Log.Debug("Entering Lookup")
+    oc = ObjectContainer()
+    oc.add(
+        VideoClipObject(
+            key         = Callback(Lookup, title=title, thumb=thumb, rating_key=rating_key, url=url, art=art, summary=summary, tagline=tagline),
+            title       = title,
+            thumb       = thumb,
+            tagline     = tagline,
+            rating_key  = rating_key,
+            summary     = summary,
+            art     = art,
+            items       = [
+                    MediaObject(
+                            parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))],
+                            optimized_for_streaming = False,
+                    )
+            ]
+        )
+    )
+
     return oc
 
 @indirect
