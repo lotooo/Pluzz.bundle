@@ -94,6 +94,18 @@ def VideoMainMenu():
     dir.Append(
         Function(
             DirectoryItem(
+                LiveMenu,
+                "Live",
+                subtitle="subtitle",
+                summary="Regarder le direct",
+                thumb=R(ICON),
+                art=R(ART)
+            )
+        )
+    )
+    dir.Append(
+        Function(
+            DirectoryItem(
                 CategoriesMenu,
                 "Categories",
                 subtitle="subtitle",
@@ -146,18 +158,6 @@ def VideoMainMenu():
                 "Par date",
                 subtitle="subtitle",
                 summary="Rangement par date",
-                thumb=R(ICON),
-                art=R(ART)
-            )
-        )
-    )
-    dir.Append(
-        Function(
-            DirectoryItem(
-                LiveMenu,
-                "Live",
-                subtitle="subtitle",
-                summary="Regarder le direct",
                 thumb=R(ICON),
                 art=R(ART)
             )
@@ -244,39 +244,25 @@ def getHDManifest(video_url):
 
 @route('/video/pluzz/live')
 def LiveMenu(sender):
-    oc = ObjectContainer(title1='Regarder le direct')
-    json = Data.Load('message_FT.json')
-    objects = JSON.ObjectFromString(json, encoding='iso-8859-15')
-    for chaine in objects['configuration']['directs']:
-        titre       = chaine['nom']
-        v_url       = chaine['video_iphone_v5']
-        # Generating f4m manifest
-        video_url   = getHDManifest(v_url)
-        #video_url   = v_url
-        Log.Debug("VideoURL: %s" % video_url)
-        summary     = "%s en direct" % chaine['nom']
-        tagline     = summary
-        rating_key  = "direct_%s" % chaine['nom']
-        art         = "%s.png" % chaine['nom'].lower()
-        thumb       = "%s.png" % chaine['nom'].lower()
-        oc.add(
-        VideoClipObject(
-            key = Callback(Lookup, title=titre, thumb=thumb, rating_key=rating_key, url=video_url, art=art, summary=summary, tagline=tagline),
-            title=L(titre),
-            tagline=L(tagline),
-            rating_key =  rating_key,
-            items = [
-                                MediaObject(
-                                        parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=video_url)))],
-                                        optimized_for_streaming = False,
-                                )
-            ],
-            summary=L(summary),
-			art=R(art),
-			thumb=R(thumb),
-        )
-	    )
-    return oc
+	oc = ObjectContainer(title1='Regarder le direct')
+
+	objects =  JSON.ObjectFromURL('http://webservices.francetelevisions.fr/catchup/flux/message_FT.json')
+	for chaine in objects['configuration']['directs']:
+		channel = chaine['nom']
+		url = 'http://m.pluzz.francetv.fr/'+channel
+	
+		try:
+			eo = URLService.MetadataObjectForURL(url=url)
+			eo.title = eo.source_title+' - '+eo.title
+			eo.url = url
+			eo.thumb = Resource.ContentsOfURLWithFallback('http://www.renders-graphics.com/image/upload/normal/'+eo.source_title.replace(' ','_').replace('_4','4').replace('Ô','')+'.png')
+			
+			oc.add(eo)
+		except:
+			#1ere is geoblocked in mainland France
+			continue
+	
+	return oc
 
 @route('/video/pluzz/date')
 def DateMenu(sender):
@@ -408,32 +394,9 @@ def MediaView(ContentType, ContentFilter, title):
 	    )
     return oc
 
-@route('/video/pluzz/program')
-def Lookup(title, thumb, rating_key, url, art, summary, tagline):
-	Log.Debug("Entering Lookup")
-	oc = ObjectContainer()
-        oc.add(
-                VideoClipObject(
-                        key 		= Callback(Lookup, title=title, thumb=thumb, rating_key=rating_key, url=url, art=art, summary=summary, tagline=tagline),
-                        title 		= title,
-                        thumb 		= thumb,
-			tagline		= tagline,
-                        rating_key 	= rating_key,
-			summary		= summary,
-			art		= art,
-                        items 		= [
-                                MediaObject(
-                                        parts = [PartObject(key=HTTPLiveStreamURL(Callback(PlayVideo, url=url)))],
-                                        optimized_for_streaming = False,
-                                )
-                        ]
-                )
-        )
-
-        return oc
-
+@indirect
 def PlayVideo(url):
-        return Redirect(url)
+        return IndirectResponse(VideoClipObject, key=HTTPLiveStreamURL(url))
 
 def CallbackInProgress(sender):
     return MessageContainer(

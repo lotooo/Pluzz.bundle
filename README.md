@@ -3,6 +3,12 @@ plugins.video.pluzz
 
 This is a plex channel to watch pluzz ( France Televisions replay) service from your plex media center
 
+Author
+======
+
+lotooo <https://github.com/lotooo>
+yutzhead <https://github.com/yutzhead/>
+
 Manual Installation: with git
 =============================
 * Open a Terminal
