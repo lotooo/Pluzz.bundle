@@ -18,7 +18,7 @@ Manual Installation: with git
 ```bash
   # mkdir github
   # cd github
-  # git clone https://github.com/catkfr/Pluzz.bundle.git
+  # git clone https://github.com/lotooo/Pluzz.bundle.git
   # cd
   # rm -fr $PLEX_FOLDER/Plug-ins/Pluzz.bundle
   # ln -s ~/github/Pluzz.bundle/ $PLEX_FOLDER/Plug-ins/Pluzz.bundle
@@ -39,7 +39,7 @@ To update the plugin:
 
 Manual installation : without git
 ================================
-* Download zip file from here: https://github.com/catkfr/Pluzz.bundle/archive/master.zip
+* Download zip file from here: https://github.com/lotooo/Pluzz.bundle/archive/master.zip
 * Unzip the file
 * Move the unzipped folder to your home directory into a folder called github and rename the unzipped folder to Pluzz.bundle (removing the -master suffix)
 * Open a Terminal
