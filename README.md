@@ -8,6 +8,7 @@ Author
 
 lotooo <https://github.com/lotooo>
 yutzhead <https://github.com/yutzhead/>
+catkfr <https://github.com/catkfr>
 
 Manual Installation: with git
 =============================
